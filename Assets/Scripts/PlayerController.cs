@@ -22,17 +22,18 @@ public class PlayerController : MonoBehaviour
 {
     private float moveInput;
 
+    private bool isGrounded;
+    private bool doubleJumpChecker;
+    private bool isPlayerLookingRight = true;
+
     private Rigidbody2D rb;
 
     public float moveSpeed;
     public float jumpForce;
     public float fastFallForce;
-    public float dashTime;
     public float checkRadius;
 
-
-    private bool isGrounded;
-    private bool isPlayerLookingRight = true;
+    public bool isInvincible;
 
     public Transform groundCheck;
 
@@ -52,6 +53,8 @@ public class PlayerController : MonoBehaviour
         UserInput();
         PlayerMovement();
         Checkers();
+
+        GroundReset();
     }
 
     void UserInput()
@@ -80,22 +83,36 @@ public class PlayerController : MonoBehaviour
         {
             Jump();
         }
-        // // Double Jump
-        // else if(Input.GetKeyDown(KeyCode.Space) && doubleJumpChecker && !isGrounded)
-        // {
-        //     DoubleJump();
-        // }
+        if(Input.GetKeyUp(KeyCode.Space) && rb.velocity.y > 0f)
+        {
+            rb.velocity = new Vector2(rb.velocity.x, rb.velocity.y * 0.5f);
+        }
+        // Double Jump
+        else if(Input.GetKeyDown(KeyCode.Space) && doubleJumpChecker && !isGrounded)
+        {
+            DoubleJump();
+        }
 
-        // // FastFall 
-        // if(Input.GetAxis("Vertical") < -0.5f && !isGrounded)
-        // {
-        //     FastFall();
-        // }
+        // FastFall 
+        if(Input.GetAxis("Vertical") < -0.5f && !isGrounded)
+        {
+            FastFall();
+        }
     }
 
     void Jump()
     {
         rb.velocity = new Vector2(rb.velocity.x, jumpForce);
+    }
+    void DoubleJump()
+    {
+        Jump();
+        doubleJumpChecker = false;
+    }
+
+    void FastFall()
+    {
+        rb.velocity = new Vector2(rb.velocity.x, rb.velocity.y-fastFallForce);
     } 
 
     void Flip()
@@ -103,6 +120,14 @@ public class PlayerController : MonoBehaviour
         //wallJumpDirection *= -1;
         isPlayerLookingRight = !isPlayerLookingRight;
         transform.Rotate(0, 180, 0);
+    } 
+
+    void GroundReset()
+    {
+        if(isGrounded)
+        {
+            doubleJumpChecker = true;
+        }
     } 
 
     void Checkers()
@@ -116,4 +141,6 @@ public class PlayerController : MonoBehaviour
         Gizmos.color = Color.green;
         Gizmos.DrawSphere(groundCheck.position, checkRadius);
     }
+
+
 }
