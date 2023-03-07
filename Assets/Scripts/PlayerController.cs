@@ -1,6 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.SceneManagement;
+using TMPro;
 
 // void helperSnoopy()
 //     {
@@ -17,6 +20,39 @@ using UnityEngine;
 //         ";
 //    	    Debug.Log(text);
 //     }
+
+//TODO: PlayerMovement
+    //TODO: fastFalling
+    //TODO: wallJump
+    //TODO: faster running after a while
+    //TODO: ATTACK LIKE IN HOLLOW KNIGHT
+    //TODO: DASH LIKE IN AUTORUNNER
+        //TODO: Think about changing direction stuff too
+    //TODO: Coyote jumping
+    //TODO: Jump Buffer
+    //TODO: HOOKSHOT
+//TODO: Player Health
+//TODO: Items
+//TODO: Inventory
+//TODO: Game Manager
+//TODO: Environment
+//TODO: Stage
+    //TODO: MainHub
+    //TODO: STAGE 1
+    //TODO: STAGE 1.5
+    //TODO: SECRET ROOM
+//TODO: Enemy1 - simple walking enemy (goomba)
+//TODO: BOSS1 - BRAINSTORM
+//TODO: SPEEDOMETER
+//TODO: Add Sound
+//TODO: MY OWN ASSETS
+
+//======MAYBE TODO======
+//TODO: PlayerMovement
+    //TODO: diveDiag -> keep momentum
+    //TODO: each jump makes player go faster?(triplejump mario) // faster running after a while?
+
+//GOAL: MAIN HUB -> STAGE 1 -> MINIBOSS (PLAYER UNLOCKS) -> STAGE 1.5 -> BOSS -> SECRET ROOM
 
 public class PlayerController : MonoBehaviour
 {
@@ -50,10 +86,9 @@ public class PlayerController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        Checkers();
         UserInput();
         PlayerMovement();
-        Checkers();
-
         GroundReset();
     }
 
@@ -64,9 +99,10 @@ public class PlayerController : MonoBehaviour
 
     void PlayerMovement()
     {
+        //Move Player Horizontal
         rb.velocity = new Vector2(moveInput * moveSpeed, rb.velocity.y);
         //Debug.Log(rb.velocity.x);
-        
+
         // Flip player when moving left or right
         if(moveInput < 0f && isPlayerLookingRight)
         {
@@ -78,36 +114,35 @@ public class PlayerController : MonoBehaviour
             Flip();
         }
 
-        // Player Jump
-        if(Input.GetKeyDown(KeyCode.Space) && isGrounded)
+        //Jump
+        if(Input.GetKeyDown(KeyCode.Space))
         {
-            Jump();
+            if(isGrounded)
+            {
+                Jump();
+            }
+            else if(doubleJumpChecker)
+            {
+                Jump();
+                doubleJumpChecker = false;
+            }
         }
+        //for better jump logic (releasing jump)
         if(Input.GetKeyUp(KeyCode.Space) && rb.velocity.y > 0f)
         {
             rb.velocity = new Vector2(rb.velocity.x, rb.velocity.y * 0.5f);
         }
-        // Double Jump
-        else if(Input.GetKeyDown(KeyCode.Space) && doubleJumpChecker && !isGrounded)
-        {
-            DoubleJump();
-        }
 
         // FastFall 
-        if(Input.GetAxis("Vertical") < -0.5f && !isGrounded)
-        {
-            FastFall();
-        }
+        // if(Input.GetAxis("Vertical") < -0.5f && !isGrounded)
+        // {
+        //     FastFall();
+        // }
     }
 
     void Jump()
     {
         rb.velocity = new Vector2(rb.velocity.x, jumpForce);
-    }
-    void DoubleJump()
-    {
-        Jump();
-        doubleJumpChecker = false;
     }
 
     void FastFall()
