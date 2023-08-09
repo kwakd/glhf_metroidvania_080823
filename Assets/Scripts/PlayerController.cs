@@ -1,181 +1,70 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
-using UnityEngine.SceneManagement;
-using TMPro;
 
-// void helperSnoopy()
-//     {
-//             string text =
-//         @"  ,-~~-.___.
-//         / |  ' 	\    	 
-//         (  )     	0  
-//         \_/-, ,----'       	 
-//             ====       	//
-//         /  \-'~;	/~~~(O)
-//         /  __/~|   /   	|	 
-//         =(  _____| (_________|
-//             )
-//         ";
-//    	    Debug.Log(text);
-//     }
-
-//TODO: PlayerMovement
-    //TODO: fastFalling
-    //TODO: wallJump
-    //TODO: faster running after a while
-    //TODO: ATTACK LIKE IN HOLLOW KNIGHT
-    //TODO: DASH LIKE IN AUTORUNNER
-        //TODO: Think about changing direction stuff too
-    //TODO: Coyote jumping
-    //TODO: Jump Buffer
-    //TODO: HOOKSHOT
-//TODO: Player Health
-//TODO: Items
-//TODO: Inventory
-//TODO: Game Manager
-//TODO: Environment
-//TODO: Stage
-    //TODO: MainHub
-    //TODO: STAGE 1
-    //TODO: STAGE 1.5
-    //TODO: SECRET ROOM
-//TODO: Enemy1 - simple walking enemy (goomba)
-//TODO: BOSS1 - BRAINSTORM
-//TODO: SPEEDOMETER
-//TODO: Add Sound
-//TODO: MY OWN ASSETS
-
-//======MAYBE TODO======
-//TODO: PlayerMovement
-    //TODO: diveDiag -> keep momentum
-    //TODO: each jump makes player go faster?(triplejump mario) // faster running after a while?
-
-//GOAL: MAIN HUB -> STAGE 1 -> MINIBOSS (PLAYER UNLOCKS) -> STAGE 1.5 -> BOSS -> SECRET ROOM
-
-public class PlayerController : MonoBehaviour
+public class playerController : MonoBehaviour
 {
-    private float moveInput;
 
-    private bool isGrounded;
-    private bool doubleJumpChecker;
-    private bool isPlayerLookingRight = true;
+    private Rigidbody2D myRigidbody;
 
-    private Rigidbody2D rb;
+    [SerializeField]private float walkSpeed = 5;
+    [SerializeField]private float jumpForce = 25;
+    [SerializeField]private float groundCheckX = 0.5f;
+    [SerializeField]private float groundCheckY = 0.2f;
+    [SerializeField]private Transform groundCheckPoint;
+    [SerializeField]private LayerMask whatIsGround;
 
-    public float moveSpeed;
-    public float jumpForce;
-    public float fastFallForce;
-    public float checkRadius;
-
-    public bool isInvincible;
-
-    public Transform groundCheck;
-
-    public LayerMask whatIsGround;
-    //public LayerMask whatIsWall;
-
+    private float xAxis;
 
     // Start is called before the first frame update
     void Start()
     {
-        rb = GetComponent<Rigidbody2D>();
+        myRigidbody = GetComponent<Rigidbody2D>();
     }
 
     // Update is called once per frame
     void Update()
     {
-        Checkers();
-        UserInput();
-        PlayerMovement();
-        GroundReset();
+        getInput();
+        movePlayer();
+        playerJump();
     }
 
-    void UserInput()
+    void getInput()
     {
-        moveInput = Input.GetAxis("Horizontal");
-    } 
-
-    void PlayerMovement()
-    {
-        //Move Player Horizontal
-        rb.velocity = new Vector2(moveInput * moveSpeed, rb.velocity.y);
-        //Debug.Log(rb.velocity.x);
-
-        // Flip player when moving left or right
-        if(moveInput < 0f && isPlayerLookingRight)
-        {
-            Flip();
-            
-        }
-        else if(moveInput > 0f && !isPlayerLookingRight)
-        {
-            Flip();
-        }
-
-        //Jump
-        if(Input.GetKeyDown(KeyCode.Space))
-        {
-            if(isGrounded)
-            {
-                Jump();
-            }
-            else if(doubleJumpChecker)
-            {
-                Jump();
-                doubleJumpChecker = false;
-            }
-        }
-        //for better jump logic (releasing jump)
-        if(Input.GetKeyUp(KeyCode.Space) && rb.velocity.y > 0f)
-        {
-            rb.velocity = new Vector2(rb.velocity.x, rb.velocity.y * 0.5f);
-        }
-
-        // FastFall 
-        // if(Input.GetAxis("Vertical") < -0.5f && !isGrounded)
-        // {
-        //     FastFall();
-        // }
+        xAxis = Input.GetAxisRaw("Horizontal");
     }
 
-    void Jump()
+    private void movePlayer()
     {
-        rb.velocity = new Vector2(rb.velocity.x, jumpForce);
+        myRigidbody.velocity = new Vector2(walkSpeed * xAxis, myRigidbody.velocity.y);
     }
 
-    void FastFall()
+    public bool isPlayerGrounded()
     {
-        rb.velocity = new Vector2(rb.velocity.x, rb.velocity.y-fastFallForce);
-    } 
-
-    void Flip()
-    {
-        //wallJumpDirection *= -1;
-        isPlayerLookingRight = !isPlayerLookingRight;
-        transform.Rotate(0, 180, 0);
-    } 
-
-    void GroundReset()
-    {
-        if(isGrounded)
+        if(Physics2D.Raycast(groundCheckPoint.position, Vector2.down, groundCheckY, whatIsGround) 
+        || Physics2D.Raycast(groundCheckPoint.position + new Vector3(groundCheckX, 0, 0), Vector2.down, groundCheckY, whatIsGround)
+        || Physics2D.Raycast(groundCheckPoint.position + new Vector3(-groundCheckX, 0, 0), Vector2.down, groundCheckY, whatIsGround))
         {
-            doubleJumpChecker = true;
+            return true;
         }
-    } 
-
-    void Checkers()
-    {
-        isGrounded = Physics2D.OverlapCircle(groundCheck.position, checkRadius, whatIsGround);
+        else
+        {
+            return false;
+        }
     }
 
-    private void OnDrawGizmosSelected()
+    void playerJump()
     {
-        //GROUNDCHECK
-        Gizmos.color = Color.green;
-        Gizmos.DrawSphere(groundCheck.position, checkRadius);
+        //better jump logic
+        if(Input.GetButtonUp("Jump") && myRigidbody.velocity.y > 0)
+        {
+            myRigidbody.velocity = new Vector2(myRigidbody.velocity.x, 0);
+        }
+
+        if(Input.GetButtonDown("Jump") && isPlayerGrounded())
+        {
+            myRigidbody.velocity = new Vector3(myRigidbody.velocity.x, jumpForce);
+        }
     }
-
-
 }
